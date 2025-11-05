@@ -1,4 +1,4 @@
-namespace SportsStoreWebApp.Models
+namespace SportsStore.Domain.Models
 {
 	public class Product
 	{
