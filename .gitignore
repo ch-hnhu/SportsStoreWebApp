@@ -1,5 +1,12 @@
+# Visual Studio / .NET build artifacts
 .vs/
 bin/
 obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 *.user
 *.suo
