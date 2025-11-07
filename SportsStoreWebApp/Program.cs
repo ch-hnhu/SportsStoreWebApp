@@ -1,9 +1,14 @@
+using SportsStore.Domain.Models;
+using SportsStoreWebApp.Middleware;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+app.UseMiddleware<RequestLoggerMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -27,13 +32,13 @@ app.MapControllerRoute(
 Console.WriteLine("--- Thực hành C# căn bản ---");
 
 // Tạo ds sp mẫu
-List<SportsStoreWebApp.Models.Product> sampleProducts = new List<SportsStoreWebApp.Models.Product>
+List<Product> sampleProducts = new List<Product>
 {
-	new SportsStoreWebApp.Models.Product { ProductID = 1, Name = "Bóng đá WorldCup", Description = "Bóng đá chính hãng", Price = 29.99M, Category = "Bóng đá" },
-	new SportsStoreWebApp.Models.Product { ProductID = 1, Name = "Áo đấu CLB A", Description = "Áo đấu cho người hâm mộ", Price = 75.50M, Category = "Quần áo" },
-	new SportsStoreWebApp.Models.Product { ProductID = 1, Name = "Vợt Tennis Pro", Description = "Vợt chuyên nghiệp", Price = 150.00M, Category = "Tennis" },
-	new SportsStoreWebApp.Models.Product { ProductID = 1, Name = "Giày chạy bộ ABC", Description = "Giày thể thao nhẹ", Price = 99.99M, Category = "Giày" },
-	new SportsStoreWebApp.Models.Product { ProductID = 1, Name = "Bóng rổ NBA", Description = "Bóng rổ tiêu chuẩn", Price = 45.00M, Category = "Bóng rổ" },
+	new Product { ProductID = 1, Name = "Bóng đá WorldCup", Description = "Bóng đá chính hãng", Price = 29.99M, Category = "Bóng đá" },
+	new Product { ProductID = 1, Name = "Áo đấu CLB A", Description = "Áo đấu cho người hâm mộ", Price = 75.50M, Category = "Quần áo" },
+	new Product { ProductID = 1, Name = "Vợt Tennis Pro", Description = "Vợt chuyên nghiệp", Price = 150.00M, Category = "Tennis" },
+	new Product { ProductID = 1, Name = "Giày chạy bộ ABC", Description = "Giày thể thao nhẹ", Price = 99.99M, Category = "Giày" },
+	new Product { ProductID = 1, Name = "Bóng rổ NBA", Description = "Bóng rổ tiêu chuẩn", Price = 45.00M, Category = "Bóng rổ" },
 };
 
 Console.WriteLine("\n--- LINQ: Lọc sản phẩm có giá trên 70 ---");
