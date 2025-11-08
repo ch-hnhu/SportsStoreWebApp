@@ -1,10 +1,14 @@
 using SportsStore.Domain.Models;
 using SportsStoreWebApp.Middleware;
+using SportsStore.Domain.Abstract;
+using SportsStoreWebApp.Concrete;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IProductRepository, FakeProductRepository>();
 
 var app = builder.Build();
 
@@ -24,6 +28,13 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+// *** Route cụ thể hơn: Ví dụ cho các URL có cấu trúc rõ ràng cho sản phẩm theo danh mục ***
+app.MapControllerRoute(
+ 	name: "product_by_category",
+ 	pattern: "san-pham/danh-muc/{category?}", // URL sẽ là /san-pham/danh-muc/bong-da
+	defaults: new { controller = "Product", action = "List" }
+);
 
 app.MapControllerRoute(
 	name: "default",
