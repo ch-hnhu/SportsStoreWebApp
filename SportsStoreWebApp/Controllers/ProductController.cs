@@ -71,4 +71,34 @@ public class ProductController : Controller
 		}
 		return Content("Kiểm tra đầu ra console/debug của bạn để tìm nhật ký!");
 	}
+
+	public IActionResult Edit(int productId = 0)
+	{
+		Product? product = productId == 0 ? new Product() :
+	   _repository.Products.FirstOrDefault(p => p.ProductID == productId);
+		if (product == null && productId != 0)
+		{
+			_logger.LogWarning("Không tìm thấy sản phẩm có ID {ProductID} để chỉnh sửa.", productId);
+			return NotFound();
+		}
+		return View(product);
+	}
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public IActionResult Edit(Product product)
+	{
+		if (ModelState.IsValid)
+		{
+			_logger.LogInformation("Dữ liệu sản phẩm cho '{ProductName}' hợp lệ.Sẵn sàng để lưu.", product.Name);
+
+			TempData["message"] = $"{product.Name} đã được lưu thành công!";
+			return RedirectToAction("List"); // Hoặc Admin Index
+		}
+		else
+		{
+			// Có lỗi validation, hiển thị lại form với các thông báo lỗi
+			_logger.LogWarning("Dữ liệu sản phẩm cho '{ProductName}' không hợp lệ.Lỗi xác thực: { Errors}", product.Name, string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+			return View(product); // Trả về cùng View với Model có lỗi
+		}
+	}
 }
