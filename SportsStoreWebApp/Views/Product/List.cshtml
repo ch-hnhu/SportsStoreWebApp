@@ -2,9 +2,17 @@
 @model IEnumerable<Product>
 @{
 	ViewData["Title"] = "Danh sách sản phẩm";
+	int totalPages = (int)Math.Ceiling((decimal)ViewBag.TotalItems / ViewBag.ItemsPerPage);
 }
+
 <h1>Danh sách sản phẩm - @ViewBag.CurrentCategory</h1>
-@if (Model != null && Model.Any())
+
+@if (!string.IsNullOrEmpty(ViewBag.CurrentCategory) && ViewBag.CurrentCategory != "Tất cả sản phẩm")
+{
+	<h2 class="text-primary">Danh mục: @ViewBag.CurrentCategory</h2>
+}
+
+@if (Model != null && Model.Any()) // Nếu có sản phẩm để hiển thị
 {
 	<table class="table table-bordered table-striped">
 		<thead>
@@ -18,36 +26,71 @@
 			</tr>
 		</thead>
 		<tbody>
-			@foreach (var p in Model)
+			@foreach (var p in Model) // Duyệt qua từng sản phẩm trong Model
 			{
 				<tr>
 					<td>@p.ProductID</td>
 					<td>@p.Name</td>
 					<td>@p.Description</td>
-					<td>$ @p.Price.ToString("#,##0.0")</td> @* Định dạng tiền tệ *@
+					<td>$ @p.Price.ToString("#,##0.00")</td>
 					<td>@p.Category</td>
-					<td>
-						<a asp-controller="Product" asp-action="Details" asp-route-id="@p.ProductID"
-							class="btn btn-info btn-sm">Chi tiết</a>
+					<td class="text-center">
+						<form asp-action="AddToCart" asp-controller="Cart" method="post" style="display:inline-block;">
+							<input type="hidden" name="productId" value="@p.ProductID" />
+							<input type="hidden" name="returnUrl"
+								value="@(Context.Request.Path + Context.Request.QueryString)" /> <button type="submit"
+								class="btn btn-sm btn-success">
+								Thêm vào giỏ
+							</button>
+						</form>
 					</td>
 				</tr>
 			}
 		</tbody>
 	</table>
+	@* Phần phân trang *@
+	<nav>
+		<ul class="pagination justify-content-center">
+			@for (int i = 1; i <= totalPages; i++)
+			{
+				@* Thêm class "active" nếu đây là trang hiện tại *@
+				<li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+					<a class="page-link" asp-controller="Product" asp-action="List" asp-route-productPage="@i">@i</a>
+				</li>
+			}
+		</ul>
+	</nav>
 }
 else
 {
-	<p>Không có sản phẩm nào để hiển thị.</p>
+	<p class="alert alert-info">
+		Không có sản phẩm nào để hiển thị trong danh mục này.
+	</p>
 }
-<div>
+<p>
+	<a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+		Về trang chủ
+	</a>
+</p>
+<div class="mt-4">
 	<h4>Lọc theo danh mục:</h4>
-	<a asp-controller="Product" asp-action="List" asp-route-category="" class="btn btn-secondary">Tất cả</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng đá" class="btn btn-secondary">Bóng đá</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Tennis" class="btn btn-secondary">Tennis</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Quần áo" class="btn btn-secondary">Quần áo</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Giày dép" class="btn btn-secondary">Giày dép</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng chuyền" class="btn btn-secondary">Bóng
+	<a asp-controller="Product" asp-action="List" asp-route-category="" class="btn btn-outline-secondary mb-1">Tất
+		cả</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng đá"
+		class="btn btn-outline-secondary mb-1">Bóng đá</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Tennis"
+		class="btn btn-outline-secondary mb-1">Tennis</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Quần áo"
+		class="btn btn-outline-secondary mb-1">Quần áo</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Giày dép"
+		class="btn btn-outline-secondary mb-1">Giày dép</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng chuyền"
+		class="btn btn-outline-secondary mb-1">Bóng
 		chuyền</a>
 	<a asp-controller="Product" asp-action="List" asp-route-category="Cầu 
-lông" class="btn btn-secondary">Cầu lông</a>
+lông" class="btn btn-outline-secondary mb-1">Cầu lông</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng rổ"
+		class="btn btn-outline-secondary mb-1">Bóng rổ</a>
+	<a asp-controller="Product" asp-action="List" asp-route-category="Phụ
+kiện" class="btn btn-outline-secondary mb-1">Phụ kiện</a>
 </div>
