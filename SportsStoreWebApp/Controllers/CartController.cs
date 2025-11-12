@@ -24,23 +24,28 @@ public class CartController : Controller
 			HttpContext.Session.SetObjectAsJson("Cart", cart); // Lưu lại giỏ hàng vào Session
 
 			_logger.LogInformation("Added product {ProductName} (ID: {ProductID}) to cart. Total items in cart: {TotalItems}", product.Name, product.ProductID, cart.Lines.Sum(i => i.Quantity));
+
+			// Lưu thông báo vào TempData
+			TempData["message"] = $"{product.Name} đã được thêm vào giỏ hàng!";
+			TempData["messageType"] = "success"; // Có thể dùng để tùy chỉnh CSS
 		}
 		else
 		{
 			_logger.LogWarning("Attempted to add non-existent product with ID { ProductID} to cart.", productId);
-
+			TempData["message"] = $"Sản phẩm không tồn tại (ID: {productId}).";
+			TempData["messageType"] = "danger";
 		}
 		return Redirect(returnUrl ?? "/"); // Chuyển hướng về trang trước
 	}
 	// Action để xem giỏ hàng
-	public IActionResult Index(string returnUrl)
+	public IActionResult Index(string? returnUrl)
 	{
 		Cart cart = HttpContext.Session.GetObjectFromJson<Cart>("Cart") ?? new Cart();
-		ViewBag.ReturnUrl = returnUrl;
+		ViewBag.ReturnUrl = returnUrl ?? Url.Action("List", "Product") ?? "/";
 		return View(cart); // Truyền đối tượng Cart sang View
 	}
 	// Action để xóa sản phẩm khỏi giỏ hàng
-	public IActionResult RemoveFromCart(int productId, string returnUrl)
+	public IActionResult RemoveFromCart(int productId, string? returnUrl)
 	{
 		Product? product = _repository.Products.FirstOrDefault(p => p.ProductID == productId);
 		if (product != null)
@@ -50,6 +55,6 @@ public class CartController : Controller
 			HttpContext.Session.SetObjectAsJson("Cart", cart);
 			_logger.LogInformation("Removed product {roductName} (ID: {roductID}) from cart.", product.Name, product.ProductID);
 		}
-		return RedirectToAction("Index", new { returnUrl });
+		return RedirectToAction("Index", new { returnUrl = returnUrl ?? Url.Action("List", "Product") });
 	}
 }
