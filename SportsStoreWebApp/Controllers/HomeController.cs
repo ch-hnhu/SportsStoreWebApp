@@ -17,6 +17,7 @@ public class HomeController : Controller
 
 	public IActionResult Index()
 	{
+		ViewBag.HtmlContent = "<p><em>Thông báo quan trọng!</em></p>";
 		_logger.LogInformation("Đã yêu cầu trang chủ.");
 		return View();
 	}
