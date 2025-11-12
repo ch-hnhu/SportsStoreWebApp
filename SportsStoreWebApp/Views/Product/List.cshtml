@@ -1,112 +1,86 @@
-@using SportsStore.Domain.Models
-@model IEnumerable<Product>
+@model IEnumerable<SportsStore.Domain.Models.Product>
 @{
 	ViewData["Title"] = "Danh sách sản phẩm";
-	@* int totalPages = ViewBag.TotalItems ? (int)Math.Ceiling((decimal)ViewBag.TotalItems / ViewBag.ItemsPerPage) : 0; *@
-	int totalItems = ViewBag.TotalItems ?? 0;
-	int itemsPerPage = ViewBag.ItemsPerPage ?? 1;
-	int totalPages = itemsPerPage > 0 ? (int)Math.Ceiling((decimal)totalItems / itemsPerPage) : 0;
+	int totalPages = (int)Math.Ceiling((decimal)ViewBag.TotalItems / ViewBag.ItemsPerPage);
+	string currentCategory = ViewBag.CurrentCategory as string ?? "";
+	int currentPage = ViewBag.CurrentPage ?? 1;
+	var categories = ViewBag.Categories;
 }
-
-<h1>Danh sách sản phẩm - @ViewBag.CurrentCategory</h1>
-
-@if (!string.IsNullOrEmpty(ViewBag.CurrentCategory) && ViewBag.CurrentCategory != "Tất cả sản phẩm")
+<h1 class="text-center my-4">@ViewData["Title"]</h1>
+@if (!string.IsNullOrWhiteSpace(currentCategory))
 {
-	<h2 class="text-primary">Danh mục: @ViewBag.CurrentCategory</h2>
+	<h2 class="text-primary text-center mb-3">@currentCategory</h2>
 }
-
-@if (Model != null && Model.Any()) // Nếu có sản phẩm để hiển thị
-{
-	<table class="table table-bordered table-striped">
-		<thead>
-			<tr>
-				<th>ID</th>
-				<th>Tên</th>
-				<th>Mô tả</th>
-				<th>Giá</th>
-				<th>Danh mục</th>
-				<th class="text-center">Hành động</th> @*Chứa nút Sửa,-Xoá*@
-				<th></th> @*Chứa nút Thêm vào giỏ*@
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var p in Model) // Duyệt qua từng sản phẩm trong Model
+<div class="row">
+	<!-- Sidebar -->
+	<div class="col-md-3">
+		<h3>Danh mục</h3>
+		<div class="list-group">
+			<a asp-action="List" asp-controller="Product" asp-route-category=""
+				class="list-group-item list-group-item-action @(string.IsNullOrWhiteSpace(currentCategory) ? "active" : "")">
+				Tất cả sản phẩm
+			</a>
+			@foreach (var category in categories)
 			{
-				<tr>
-					<td>@p.ProductID</td>
-					<td>@p.Name</td>
-					<td>@p.Description</td>
-					<td>$ @p.Price.ToString("#,##0.00")</td>
-					<td>@p.Category</td>
-					<td class="text-center">
-						<a asp-action="Edit" asp-route-productId="@p.ProductID" class="btn btn-sm btn-warning">
-							Sửa
-						</a>
-						<form asp-action="Delete" asp-route-productId="@p.ProductID" method="post"
-							style="display:inline-block;">
-							<button type="submit" class="btn btn-sm btn-danger"
-								onclick="return confirm('Bạn có chắc chắn muốn xóa @p.Name không?');">
-								Xóa
-							</button>
-						</form>
-					</td>
-					<td class="text-center">
-						<form asp-action="AddToCart" asp-controller="Cart" method="post" style="display:inline-block;">
-							<input type="hidden" name="productId" value="@p.ProductID" />
-							<input type="hidden" name="returnUrl"
-								value="@(Context.Request.Path + Context.Request.QueryString)" /> <button type="submit"
-								class="btn btn-sm btn-success">
-								Thêm vào giỏ
-							</button>
-						</form>
-					</td>
-				</tr>
+				<a asp-action="List" asp-controller="Product" asp-route-category="@category"
+					class="list-group-item list-group-item-action @(category == currentCategory ? "active" : "")">
+					@category
+				</a>
 			}
-		</tbody>
-	</table>
-	@* Phần phân trang *@
-	<nav>
-		<ul class="pagination justify-content-center">
-			@for (int i = 1; i <= totalPages; i++)
-			{
-				@* Thêm class "active" nếu đây là trang hiện tại *@
-				<li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-					<a class="page-link" asp-controller="Product" asp-action="List" asp-route-productPage="@i">@i</a>
-				</li>
-			}
-		</ul>
-	</nav>
-}
-else
-{
-	<p class="alert alert-info">
-		Không có sản phẩm nào để hiển thị trong danh mục này.
-	</p>
-}
-<p>
-	<a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
-		Về trang chủ
-	</a>
-</p>
-<div class="mt-4">
-	<h4>Lọc theo danh mục:</h4>
-	<a asp-controller="Product" asp-action="List" asp-route-category="" class="btn btn-outline-secondary mb-1">Tất
-		cả</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng đá"
-		class="btn btn-outline-secondary mb-1">Bóng đá</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Tennis"
-		class="btn btn-outline-secondary mb-1">Tennis</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Quần áo"
-		class="btn btn-outline-secondary mb-1">Quần áo</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Giày dép"
-		class="btn btn-outline-secondary mb-1">Giày dép</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng chuyền"
-		class="btn btn-outline-secondary mb-1">Bóng
-		chuyền</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Cầu 
-lông" class="btn btn-outline-secondary mb-1">Cầu lông</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Bóng rổ"
-		class="btn btn-outline-secondary mb-1">Bóng rổ</a>
-	<a asp-controller="Product" asp-action="List" asp-route-category="Phụ
-kiện" class="btn btn-outline-secondary mb-1">Phụ kiện</a>
+		</div>
+	</div>
+	<!-- Main content -->
+	<div class="col-md-9">
+		@if (Model?.Any() == true)
+		{
+			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+				@foreach (var p in Model)
+				{
+					<div class="col">
+						<div class="card h-100 shadow-sm">
+							<img src="@(!string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "https://via.placeholder.com/200x200?text=No+Image")"
+								class="card-img-top" alt="@p.Name" style="height: 200px; object-fit: cover;" />
+							<div class="card-body d-flex flex-column">
+								<h5 class="card-title">@p.Name</h5>
+								<p class="card-text text-muted">@p.Category</p>
+								<p class="card-text flex-grow-1">@p.Description</p>
+								<div class="d-flex justify-content-between align-items-center mt-auto">
+									<h4 class="text-success mb-0">@p.Price.ToString("C")</h4>
+									<form asp-action="AddToCart" asp-controller="Cart" method="post" class="d-inline">
+										<input type="hidden" name="productId" value="@p.ProductID" />
+										<input type="hidden" name="returnUrl"
+											value="@(Context.Request.Path + Context.Request.QueryString)" />
+										<button type="submit" class="btn btn-primary btn-sm">
+											<i class="fas fa-cart-plus"></i> Thêm vào giỏ
+										</button>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+			<!-- Pagination -->
+			<nav aria-label="Phân trang" class="mt-4">
+				<ul class="pagination justify-content-center">
+					@for (int i = 1; i <= totalPages; i++)
+					{
+						<li class="page-item @(i == currentPage ? "active" : "")">
+							<a class="page-link" asp-controller="Product" asp-action="List"
+								asp-route-category="@currentCategory" asp-route-productPage="@i">@i</a>
+						</li>
+					}
+				</ul>
+			</nav>
+		}
+		else
+		{
+			<div class="alert alert-warning text-center" role="alert">
+				Không tìm thấy sản phẩm nào trong danh mục này.
+			</div>
+		}
+	</div>
 </div>
+@section Scripts {
+	<script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+}
