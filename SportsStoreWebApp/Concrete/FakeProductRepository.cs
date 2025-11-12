@@ -7,7 +7,7 @@ namespace SportsStoreWebApp.Concrete
 {
 	public class FakeProductRepository : IProductRepository
 	{
-		public IQueryable<Product> Products => new List<Product>
+		public List<Product> products => new List<Product>
 		{
 			new Product { ProductID = 1, Name = "Bóng đá Adidas", Description = "Bóng đá dùng cho mọi loại sân, độ bền cao.", Price = 25.00m, Category = "Bóng đá" },
 			new Product { ProductID = 2, Name = "Áo đấu đội tuyển A", Description = "Áo đấu chất liệu thoáng khí, thấm hút mồ hôi.", Price = 49.99m, Category = "Quần áo" },
@@ -16,6 +16,27 @@ namespace SportsStoreWebApp.Concrete
 			new Product { ProductID = 5, Name = "Bóng chuyền Mikasa  MVA200", Description = "Bóng chuyền tiêu chuẩn thi đấu quốc tế.", Price =  30.00m, Category = "Bóng chuyền" },
 			new Product { ProductID = 6, Name = "Bóng đá Nike Strike", Description = "Bóng đá tập luyện chất lượng cao.", Price = 20.00m, Category = "Bóng đá" },
 			new Product { ProductID = 7, Name = "Quần short thể thao", Description = "Quần short co giãn, thoải mái khi vận động.", Price = 25.00m, Category = "Quần áo" }
-		}.AsQueryable();
+		};
+		public IQueryable<Product> Products => products.AsQueryable();
+		public void SaveProduct(Product product) // <-- Triển khai phương thức
+		{
+			if (product.ProductID == 0) // Nếu là sản phẩm mới (ID=0), gán ID mới
+			{
+				product.ProductID = products.Max(p => p.ProductID) + 1;
+				products.Add(product);
+			}
+			else // Nếu là sản phẩm đã có, cập nhật
+			{
+				Product? existingProduct = products.FirstOrDefault(p =>
+			   p.ProductID == product.ProductID);
+				if (existingProduct != null)
+				{
+					existingProduct.Name = product.Name;
+					existingProduct.Description = product.Description;
+					existingProduct.Price = product.Price;
+					existingProduct.Category = product.Category;
+				}
+			}
+		}
 	}
 }

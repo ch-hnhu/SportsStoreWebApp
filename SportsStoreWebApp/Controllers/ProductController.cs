@@ -72,33 +72,89 @@ public class ProductController : Controller
 		return Content("Kiểm tra đầu ra console/debug của bạn để tìm nhật ký!");
 	}
 
-	public IActionResult Edit(int productId = 0)
+	// Action Edit (GET): Hiển thị form chỉnh sửa sản phẩm
+	public ViewResult Edit(int productId)
 	{
-		Product? product = productId == 0 ? new Product() :
-	   _repository.Products.FirstOrDefault(p => p.ProductID == productId);
-		if (product == null && productId != 0)
+		// Tìm sản phẩm theo ID
+		Product? product = _repository.Products.FirstOrDefault(p => p.ProductID == productId);
+		if (product == null)
 		{
-			_logger.LogWarning("Không tìm thấy sản phẩm có ID {ProductID} để chỉnh sửa.", productId);
-			return NotFound();
-		}
-		return View(product);
-	}
-	[HttpPost]
-	[ValidateAntiForgeryToken]
-	public IActionResult Edit(Product product)
-	{
-		if (ModelState.IsValid)
-		{
-			_logger.LogInformation("Dữ liệu sản phẩm cho '{ProductName}' hợp lệ.Sẵn sàng để lưu.", product.Name);
+			// Nếu không tìm thấy sản phẩm, có thể chuyển hướng hoặc hiển thị lỗi
 
-			TempData["message"] = $"{product.Name} đã được lưu thành công!";
-			return RedirectToAction("List"); // Hoặc Admin Index
+			_logger.LogWarning("Không tìm thấy sản phẩm có ID { ProductId} để chỉnh sửa.", productId);
+
+			TempData["message"] = $"Sản phẩm có ID {productId} không tồn tại.";
+
+			return View("List", _repository.Products); // Trả về lại danh sách
+
+		}
+		return View(product); // Truyền đối tượng Product vào View
+	}
+	// Action Edit (POST): Xử lý dữ liệu gửi từ form chỉnh sửa
+	[HttpPost]
+	public IActionResult Edit(Product product) // Model Binding sẽ tựđộng điền dữ liệu vào 'product'
+	{
+		if (ModelState.IsValid) // Kiểm tra xem Model có hợp lệ không
+		{
+			_repository.SaveProduct(product); // Lưu sản phẩm (sẽ tạo mới nếu ID = 0, cập nhật nếu ID > 0)
+			_logger.LogInformation("Product '{ Sản phẩm '{ProductName}' (ID: {ProductId}) đã được lưu thành công.", product.Name, product.ProductID);
+			TempData["message"] = $"{product.Name} đã được lưu thành công!"; // Hiển thị thông báo
+			return RedirectToAction("List"); // Chuyển hướng về trang danh sách sản phẩm
 		}
 		else
 		{
-			// Có lỗi validation, hiển thị lại form với các thông báo lỗi
-			_logger.LogWarning("Dữ liệu sản phẩm cho '{ProductName}' không hợp lệ.Lỗi xác thực: { Errors}", product.Name, string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-			return View(product); // Trả về cùng View với Model có lỗi
+			// Dữ liệu không hợp lệ, trả về View để hiển thị lỗi
+			_logger.LogWarning("Không xác thực được sản phẩm '{ProductName}'(ID: {ProductId}). Lỗi: {Errors}",
+				product.Name ?? "N/A", product.ProductID,
+				string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+			return View(product); // Truyền Model trở lại View để giữ dữ liệu đã nhập
 		}
+	}
+	// Action Create: Hiển thị form tạo sản phẩm mới (tương tự Edit nhưng ID = 0)
+	public ViewResult Create()
+	{
+		return View("Edit", new Product()); // Sử dụng lại View Edit với một Product trống
+	}
+	// Action Delete: Giả lập xóa sản phẩm (chỉ để hoàn thiện logic cơ bản)
+	[HttpPost]
+	public IActionResult Delete(int productId)
+	{
+		Product? productToDelete = _repository.Products.FirstOrDefault(p => p.ProductID == productId);
+		if (productToDelete != null)
+		{
+			// FakeProductRepository không có Remove, nên chỉ log
+			_logger.LogInformation("Sản phẩm '{ProductName}' (ID: {ProductId}) được đánh dấu để xóa (thực tế không bị xóa trong FakeRepository).", productToDelete.Name, productToDelete.ProductID);
+			TempData["message"] = $"{productToDelete.Name} đã được đánh dấu xóa!";
+		}
+		else
+		{
+			TempData["message"] = $"Sản phẩm có ID {productId} không tồn tại để xóa.";
+
+		}
+		return RedirectToAction("List");
+	}
+	public IActionResult FilterProducts(ProductFilter filter) // Model Binding cho ProductFilter
+	{
+		_logger.LogInformation("Lọc sản phẩn theo Category: {Category}, MinPrice: {MinPrice}, MaxPrice: { MaxPrice}, InStockOnly: { InStock}", filter.Category, filter.MinPrice, filter.MaxPrice, filter.InStockOnly);
+		// Logic lọc sản phẩm dựa trên filter
+		var filteredProducts = _repository.Products;
+		if (!string.IsNullOrEmpty(filter.Category))
+		{
+			filteredProducts = filteredProducts.Where(p => p.Category ==
+		   filter.Category);
+		}
+		if (filter.MinPrice.HasValue)
+		{
+			filteredProducts = filteredProducts.Where(p => p.Price >=
+		filter.MinPrice.Value);
+		}
+		if (filter.MaxPrice.HasValue)
+		{
+			filteredProducts = filteredProducts.Where(p => p.Price <=
+		   filter.MaxPrice.Value);
+		}
+		// Nếu InStockOnly = true, thì lọc thêm điều kiện này
+		// if (filter.InStockOnly) { filteredProducts = filteredProducts.Where(p => p.IsInStock());
+		return View("List", filteredProducts.ToList()); // Tái sử dụng View List
 	}
 }
