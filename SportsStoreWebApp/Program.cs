@@ -3,6 +3,9 @@ using SportsStoreWebApp.Middleware;
 using SportsStore.Domain.Abstract;
 using SportsStoreWebApp.Concrete;
 using SportsStoreWebApp.Configurations;
+using Microsoft.EntityFrameworkCore;
+using SportsStore.Infrastructure;
+using SportsStore.Infrastructure.Repositories; // Namespace của DbContext
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +14,12 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<IProductRepository, FakeProductRepository>();
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(
+builder.Configuration.GetConnectionString("SportsStoreConnection")));
+
+// builder.Services.AddScoped<IProductRepository, FakeProductRepository>();
+
+builder.Services.AddScoped<IProductRepository, EFProductRepository>(); // Thay thế bằng EFProductRepository
 
 builder.Services.Configure<PagingSettings>(builder.Configuration.GetSection("PagingSettings"));
 

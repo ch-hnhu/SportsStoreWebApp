@@ -18,7 +18,8 @@ namespace SportsStoreWebApp.Concrete
 			new Product { ProductID = 7, Name = "Quần short thể thao", Description = "Quần short co giãn, thoải mái khi vận động.", Price = 25.00m, Category = "Quần áo" }
 		};
 		public IQueryable<Product> Products => products.AsQueryable();
-		public void SaveProduct(Product product) // <-- Triển khai phương thức
+
+		public Task SaveProduct(Product product) // Thay đổi return type thành Task
 		{
 			if (product.ProductID == 0) // Nếu là sản phẩm mới (ID=0), gán ID mới
 			{
@@ -37,6 +38,17 @@ namespace SportsStoreWebApp.Concrete
 					existingProduct.Category = product.Category;
 				}
 			}
+			return Task.CompletedTask; // Trả về Task đã hoàn thành
+		}
+
+		public Task<Product?> DeleteProduct(int productId)
+		{
+			Product? product = products.FirstOrDefault(p => p.ProductID == productId);
+			if (product != null)
+			{
+				products.Remove(product);
+			}
+			return Task.FromResult(product); // Trả về Task với kết quả
 		}
 	}
 }
