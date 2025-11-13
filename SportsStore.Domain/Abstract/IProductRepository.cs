@@ -5,6 +5,7 @@ namespace SportsStore.Domain.Abstract
 	{
 		// Thuộc tính để lấy tất cả sản phẩm
 		IQueryable<Product> Products { get; }
-		void SaveProduct(Product product); // <-- Thêm phương thức này
+		Task SaveProduct(Product product);
+		Task<Product?> DeleteProduct(int productId);
 	}
 }
