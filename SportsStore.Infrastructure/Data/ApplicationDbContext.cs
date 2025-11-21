@@ -17,26 +17,7 @@ namespace SportsStore.Infrastructure
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			// Cấu hình cho bảng Product
-			modelBuilder.Entity<Product>(entity =>
-			{
-				entity.ToTable("Products"); // Đặt tên bảng rõ ràng
-				entity.HasKey(e => e.ProductID); // Đặt khóa chính
-
-				entity.Property(e => e.Name)
-					.IsRequired()
-					.HasMaxLength(100); // Ràng buộc độ dài và không null
-
-				entity.Property(e => e.Price)
-	 				.HasColumnType("decimal(18, 2)"); // Kiểu dữ liệu chính xác cho cột
-
-				entity.Property(e => e.Description)
-				.HasMaxLength(500); // Giới hạn độ dài mô tả
-
-				// Nếu có CategoryId làm khóa ngoại
-				// entity.HasOne(p => p.CategoryRef) // Mối quan hệ một-nhiều với Category
-				// .WithMany(c => c.Products)
-				// .HasForeignKey(p => p.CategoryId);
-			});
+			modelBuilder.Entity<Product>().HasOne(p => p.CategoryRef).WithMany(c => c.Products).HasForeignKey(p => p.CategoryId);
 			// Cấu hình cho bảng Category
 			modelBuilder.Entity<Category>(entity =>
 			{
