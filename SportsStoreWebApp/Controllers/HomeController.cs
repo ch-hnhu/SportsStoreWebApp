@@ -1,63 +1,84 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging; // Đảm bảo đã import namespace này
-using System; // Cần cho InvalidOperationException
-using Microsoft.Extensions.Options; // Cần cho IOptions
 using SportsStore.Domain.Abstract;
-using SportsStoreWebApp.Models;
-using SportsStoreWebApp.Configurations;
+using SportsStore.Domain.Models;
+using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
-namespace SportsStoreWebApp.Controllers;
-
-public class HomeController : Controller
+namespace SportsStoreWebApp.Controllers
 {
-	private readonly ILogger<HomeController> _logger; // Khai báo một biến để lưu trữ ILogger
-	private readonly IProductRepository _repository;
-	private readonly PagingSettings _pagingSettings; // Khai báo thuộc tính để lưu cấu hình phân trang
-
-	// Constructor của HomeController
-	// ASP.NET Core sẽ tự động inject ILogger vào đây
-	public HomeController(IProductRepository repository, ILogger<HomeController> logger, IOptions<PagingSettings> pagingSettings)
+	public class AdminController : Controller
 	{
-		_repository = repository;
-		_logger = logger;
-		_pagingSettings = pagingSettings.Value; // Lấy đối tượng PagingSettings từ IOptions
-	}
-	public IActionResult Index(string? category = null, int productPage = 1)
-	{
-		// Ghi log thông tin về yêu cầu truy cập trang sản phẩm
+		private IProductRepository _repository;
+		public AdminController(IProductRepository repo)
+		{
+			_repository = repo;
+		}
+		public ViewResult Index() => View(_repository.Products); // Hiển thị tất cả sản phẩm trong Admin Panel
 
-		_logger.LogInformation("Yêu cầu danh sách sản phẩm. Danh mục: { Category}, Trang: { Page}", category, productPage);
-		// Lấy số sản phẩm trên mỗi trang từ cấu hình PagingSettings
-		int itemsPerPage = _pagingSettings.ItemsPerPage;
-		// int maxPagesToShow = _pagingSettings.MaxPagesToShow; // Có thể dùng sau nếu muốn giới hạn số nút trang hiển thị
-		// Lọc sản phẩm theo danh mục (nếu category không null hoặc rỗng)
-		// Sau đó sắp xếp và thực hiện phân trang (Skip/Take)
-		var productsQuery = _repository.Products
-		.Where(p => category == null || p.Category == category);
-		var products = productsQuery
-		.OrderBy(p => p.ProductID) // Quan trọng: Sắp xếp trước khi Skip / Take để đảm bảo phân trang đúng thứ tự
-		.Skip((productPage - 1) * itemsPerPage) // Bỏ qua các sản phẩm của các trang trước đó
-		.Take(itemsPerPage) // Lấy số sản phẩm bằng ItemsPerPage cho trang hiện tại
-		.ToList(); // Chuyển kết quả sang List để truyền cho View
+		// POST: Admin/Edit
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(Product product)
+		{
+			if (ModelState.IsValid)
+			{
+				await _repository.SaveProduct(product);
+				TempData["message"] = $"{product.Name} đã được lưu thành công.";
 
-		// Chuẩn bị dữ liệu cần thiết cho View thông qua ViewBag
-		ViewBag.Categories = _repository.Products
-		.Select(p => p.Category)
-		.Distinct()
-		.OrderBy(c => c)
-		.ToList();
-		ViewBag.CurrentCategory = category ?? "Tất cả sản phẩm"; // Danh mục hiện tại
+				return RedirectToAction(nameof(Index)); // Chuyển hướng về trang Index của Admin
 
-		ViewBag.CurrentPage = productPage; // Trang hiện tại
-		ViewBag.TotalItems = productsQuery.Count(); // Tổng số sản phẩm SAU KHI lọc, nhưng TRƯỚC KHI phân trang
+			}
+			else
+			{
+				// Dữ liệu không hợp lệ, hiển thị lại form
+				return View(product);
+			}
+		}
+		// GET: Admin/Create
+		public ViewResult Create() => View("Edit", new Product()); // Tái sử dụng View Edit cho Create
+																   // POST: Admin/Delete
+		[HttpPost]
 
-		ViewBag.ItemsPerPage = itemsPerPage; // Số sản phẩm trên mỗi trang
+		public async Task<IActionResult> Delete(int productId)
+		{
+			Product? deletedProduct = await
+		   _repository.DeleteProduct(productId);
+			if (deletedProduct != null)
+			{
+				TempData["message"] = $"{deletedProduct.Name} đã được xóa.";
 
-		// Ghi log thông tin về số lượng sản phẩm được trả về
-		//_logger.LogInformation("Trả về {ProductCount} sản phẩm cho trang { Page}. Tổng số sản phẩm: { TotalItems}", products.Count, productPage, ViewBag.TotalItems);
-		// Trả về View với danh sách sản phẩm của trang hiện tại làm Model
-		return View(products);
+			}
+			else
+			{
+				TempData["message"] = $"Không tìm thấy sản phẩm có ID: {productId} để xóa.";
+
+				TempData["messageType"] = "danger"; // Báo lỗi
+			}
+			return RedirectToAction(nameof(Index));
+		}
+		// Controllers/AdminController.cs
+		public async Task<IActionResult> Edit(int productId)
+		{
+			Product? product;
+			if (productId == 0)
+			{
+				product = new Product();
+			}
+			else
+			{
+				// Sử dụng Include để tải Category liên quan
+				product = await _repository.Products
+					.Include(p => p.CategoryRef) // Bỏ comment nếu có CategoryRef và muốn tải
+					.FirstOrDefaultAsync(p => p.ProductID == productId);
+				if (product == null)
+				{
+					return NotFound();
+				}
+			}
+			// Nếu bạn có danh mục riêng, bạn có thể tải chúng vào ViewBag để dùng cho dropdown
+			// ViewBag.Categories = await _context.Categories.ToListAsync();
+			return View(product);
+		}
 	}
 }
