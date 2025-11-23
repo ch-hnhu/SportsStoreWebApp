@@ -1,9 +1,12 @@
 // SportsStore.Infrastructure/ApplicationDbContext.cs (trong một thư mục mới cho cơ sở hạ tầng dữ liệu)
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SportsStore.Domain.Models; // Sử dụng các Model đã định nghĩa
+
 namespace SportsStore.Infrastructure
 {
-	public class ApplicationDbContext : DbContext
+	// Kế thừa từ IdentityDbContext<ApplicationUser> thay vì DbContext
+	public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 	{
 		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
 		: base(options) { }
@@ -16,6 +19,9 @@ namespace SportsStore.Infrastructure
 		// OnModelCreating() sẽ được thảo luận dưới đây
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
+			// QUAN TRỌNG: Gọi base để cấu hình các bảng Identity
+			base.OnModelCreating(modelBuilder);
+
 			// Cấu hình cho bảng Product
 			modelBuilder.Entity<Product>().HasOne(p => p.CategoryRef).WithMany(c => c.Products).HasForeignKey(p => p.CategoryId);
 			// Cấu hình cho bảng Category

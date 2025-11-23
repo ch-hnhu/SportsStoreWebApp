@@ -22,8 +22,7 @@
 
 			<div class="mb-3">
 				<label asp-for="CategoryId" class="form-label">Danh mục</label>
-				<select asp-for="CategoryId" class="form-control" asp-items="@(new SelectList(ViewBag.Categories, 
-																																								  "CategoryID", "Name", Model.CategoryId))"></select>
+				<select asp-for="CategoryId" class="form-control" asp-items="@(new SelectList(ViewBag.Categories,"CategoryID", "Name", Model.CategoryId))"></select>
 				<span asp-validation-for="CategoryId" class="text-danger"></span>
 			</div>
 			<div class="mb-3">
